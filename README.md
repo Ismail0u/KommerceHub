@@ -1,43 +1,68 @@
 # KommerceHub
 
-**Open Source SaaS Platform for Multi-channel Commercial Management tailored for the African context.**
+**Open Source Multi-channel Commercial Management SaaS Platform tailored for the African context.**
+
+[](https://www.google.com/search?q=%5Bhttps://opensource.org/licenses/AGPL-3.0%5D\(https://opensource.org/licenses/AGPL-3.0\))
+[](https://www.djangoproject.com/)
+[](https://reactjs.org/)
+[](https://expo.dev/)
+
+-----
 
 ## Vision & Context
 
-In many Sub-Saharan regions, particularly in Niger, local merchants still rely on manual ledgers or fragmented spreadsheets. **KommerceHub** aims to bridge this digital gap by providing a robust, **offline-first** solution that synchronizes sales, inventory, and mobile payments (Wave, Airtel Money, Mynita) into a single, easy-to-use ecosystem.
+In Sub-Saharan Africa-specifically in **Niger**-local merchants predominantly operate using manual paper ledgers or un-synchronized spreadsheets, leading to zero real-time visibility **KommerceHub** bridges this gap by providing an **offline-first** SaaS solution designed for local constraints: intermittent connectivity and a strong mobile money culture.
 
-By choosing the **AGPL-3.0 license**, we ensure that the platform remains open and that any commercial improvements made by third parties benefit the entire community.
+By choosing the **AGPL-3.0 license**, we ensure the platform remains open-source while remaining economically viable—similar to the models used by Cal.com or Documenso
 
-## Key Features (MVP 1.0)
+-----
 
-  - **Unified Inventory Management**: Real-time tracking across multiple warehouses with low-stock automated alerts.
-  - **Offline-First Mobile POS**: A React Native application allowing field agents to process sales without an internet connection, with background synchronization.
-  - **Multitenancy Architecture**: Designed as a SaaS where each merchant manages their own isolated environment.
-  - **Local Payment Integration**: Native support for popular West African mobile money APIs.
-  - **Professional Reporting**: Dynamic generation of PDF invoices and thermal receipts using WeasyPrint.
+##  Key Features (MVP 1.0)
+
+  * **Strict Multi-tenant Architecture**: Every API request is filtered by `merchant_id` to ensure absolute data isolation.
+  * **Offline-First Mobile POS**: Full sales processing capability without internet, using WatermelonDB for local storage and automatic background sync.
+  * **Inventory & Stock Management**: Full CRUD for products with automated low-stock alerts and movement history.
+  * **Sales & Digital Receipts**: Rapid sales registration with automatic PDF ticket generation.
+  * **Local Payment Tracking**: Native support for recording payments via **Wave, Airtel Money, Mynita**, and Cash.
+  * **RBAC Security**: Three distinct access levels (Platform Admin, Merchant, Seller) enforced at the backend level.
+
+-----
 
 ## Tech Stack
 
-We utilize a modern, scalable architecture designed for performance and reliability:
+  * **Backend**: Django 5 & Django REST Framework with JWT authentication.
+  * **Web Dashboard**: React 18, Vite, Tailwind CSS, and Shadcn/ui.
+  * **Mobile App**: React Native (Expo SDK 51) using the Hermes engine.
+  * **Database & Cache**: PostgreSQL 16 for ACID transactions and Redis 7 for dashboard caching.
+  * **DevOps**: Monorepo architecture managed by **Turborepo** with full Docker containerization.
 
-  - **Backend**: [Django REST Framework](https://www.django-rest-framework.org/) (Python) — Chosen for its security, robust ORM, and rapid development capabilities.
-  - **Frontend Web**: [React](https://react.dev/) + Vite + Tailwind CSS — Providing a high-performance, responsive administrative dashboard.
-  - **Mobile**: [React Native](https://reactnative.dev/) (Expo) — Ensuring a smooth cross-platform experience (Android/iOS) with specialized offline storage.
-  - **Database**: PostgreSQL (Structured data) & Redis (Caching/Tasks).
-  - **Deployment**: Fully containerized using **Docker** for "one-command" environment setup.
+-----
 
-##  Project Structure
+## Project Structure (Monorepo)
 
 ```bash
 kommercehub/
-├── backend/      # Django REST API (Business logic, Auth, DB)
-├── frontend/     # React Web App (Merchant Dashboard)
-├── mobile/       # React Native App (Sales & Field Operations)
-├── docker/       # Dockerfiles & Orchestration
-└── docs/         # Full functional & technical specifications
+├── apps/
+│   ├── api/          # Django 5 REST API (Business logic & Multi-tenancy) 
+│   ├── web/          # React Frontend (Advanced Merchant Dashboard) 
+│   └── mobile/       # React Native App (Field Sales & Offline sync) 
+├── packages/
+│   ├── shared/       # Shared TypeScript types, constants, and Zustand stores 
+│   └── ui/           # Shared UI components (Phase 2) 
+├── docker-compose.yml # Local orchestration (API + DB + Redis) 
+└── docs/             # Technical & Functional specifications 
 ```
 
-##  Quick Start (Development Mode)
+-----
+
+##  Quick Start (Development)
+
+### Prerequisites
+
+  * Docker and Docker Compose installed.
+  * Node.js (for monorepo management).
+
+### Installation
 
 1.  **Clone the repository**:
 
@@ -46,23 +71,28 @@ kommercehub/
     cd kommercehub
     ```
 
-2.  **Launch with Docker**:
+2.  **Launch the full environment**:
 
     ```bash
     docker-compose up --build
     ```
 
-    *The API will be available at `localhost:8000` and the Web Dashboard at `localhost:5173`.*
+<!-- end list -->
 
-## Contribution & License
-
-This project is licensed under the **GNU Affero General Public License v3.0**.
-
-  - **Commercial use**: Allowed, but you must share your source code if you host it as a service.
-  - **Contributions**: We welcome PRs\! Please check our `docs/` folder for the full functional requirements before submitting changes.
+  * **API (Swagger)**: `http://localhost:8000/api/schema/swagger-ui/`
+  * **Web Dashboard**: `http://localhost:5173`
 
 -----
-**Developed by [Moussa Ismael](https://github.com/Ismail0u) & Yahyah Gamazo Kabirou.**
+
+##  Contribution & License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+  * **Commercial Use**: Permitted, but you **must** share your source code and modifications if you host KommerceHub as a service.
+  * **Contributions**: We welcome PRs\! Please follow the **Conventional Commits** standard and check our `CONTRIBUTING.md` before submitting.
+
+Developed by **Moussa Ismael** & **Yahyah Gamazo Kabirou** (April 2026).
+
 
 
 
