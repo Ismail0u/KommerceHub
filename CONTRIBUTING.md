@@ -38,7 +38,7 @@ This project adheres to the **Contributor Covenant**. By participating, you agre
 # Fork via the GitHub UI, then:
 git clone https://github.com/YOUR_USERNAME/kommercehub.git
 cd kommercehub
-git remote add upstream https://github.com/KommerceHub/kommercehub.git
+git remote add upstream https://github.com/Ismail0u/kommercehub.git
 
 # Create a descriptive branch
 git checkout -b feat/inventory-movement-management
