@@ -1,0 +1,99 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior
+title: "[BUG] "
+labels: ["type: bug", "status: needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report. The more precise it is, the faster we can fix it!
+
+  - type: input
+    id: version
+    attributes:
+      label: KommerceHub Version
+      description: Which version are you using? (Check the app footer or run `git describe --tags`)
+      placeholder: "v1.0.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      options:
+        - Web (React Frontend)
+        - Mobile (Android)
+        - API (Django Backend)
+        - Offline Sync
+        - Authentication
+        - Dashboard / Analytics
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Precise and reproducible steps
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Observe '...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Messages
+      description: Paste console logs, Sentry messages, or Python tracebacks here
+      render: shell
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Information about your technical setup
+      placeholder: |
+        - OS: Ubuntu 22.04 / Windows 11 / macOS 14
+        - Browser: Chrome 124 / Firefox 125
+        - Mobile: Android 13, Samsung Galaxy A54
+        - Node.js: 20.x
+        - Python: 3.12.x
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Screenshots, videos, or any other useful context
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this bug has not been reported yet
+          required: true
+        - label: I have tested this on the latest version of the main branch
+          required: false

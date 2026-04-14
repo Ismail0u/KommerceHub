@@ -1,0 +1,187 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────
+  # Lint
+  # ─────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint TypeScript/React (ESLint)
+        run: pnpm lint
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Lint Python (Ruff)
+        working-directory: apps/api
+        run: |
+          pip install ruff
+          ruff check .
+          ruff format --check .
+
+  # ─────────────────────────────────────
+  # Tests Backend
+  # ─────────────────────────────────────
+  test-backend:
+    name: Tests Backend (pytest)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kommercehub_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: pip install -r requirements/dev.txt
+
+      - name: Run migrations
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/kommercehub_test
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: ci-test-secret-key-not-for-production
+        run: python manage.py migrate --noinput
+
+      - name: Run tests with coverage
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/kommercehub_test
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: ci-test-secret-key-not-for-production
+        run: |
+          pytest --cov=. --cov-report=xml --cov-report=term-missing -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: apps/api/coverage.xml
+          flags: backend
+
+  # ─────────────────────────────────────
+  # Tests Frontend
+  # ─────────────────────────────────────
+  test-frontend:
+    name: Tests Frontend (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm web:test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: apps/web/coverage/lcov.info
+          flags: frontend
+
+  # ─────────────────────────────────────
+  # Build
+  # ─────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test-backend, test-frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web
+        run: pnpm web:build
+
+      - name: Build Docker image (API)
+        run: docker build -t kommercehub-api:ci apps/api/
+
+  # ─────────────────────────────────────
+  # Coverage comment sur PR
+  # ─────────────────────────────────────
+  coverage-comment:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post coverage comment
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

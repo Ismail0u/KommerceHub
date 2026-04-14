@@ -1,0 +1,96 @@
+name: 🗺️ Epic
+description: Group a set of tickets related to a major feature
+title: "[EPIC] "
+labels: ["type: epic"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An Epic groups multiple issues related to the same feature.
+        It serves as a global tracking point. **Do not code directly in an Epic** — it only references child issues.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Epic Goal
+      description: In one or two sentences, what this Epic should accomplish
+      placeholder: "Example: Allow a seller to authenticate, change their temporary password, and access their features."
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_stories
+    attributes:
+      label: User Stories
+      value: |
+        - As a [role], I want [action] so that [benefit]
+        - As a [role], I want [action] so that [benefit]
+    validations:
+      required: true
+
+  - type: textarea
+    id: issues
+    attributes:
+      label: Child Issues
+      description: Update this list as decomposition progresses
+      value: |
+        ### Backend (API)
+        - [ ] #
+        - [ ] #
+
+        ### Frontend Web
+        - [ ] #
+        - [ ] #
+
+        ### Mobile
+        - [ ] #
+        - [ ] #
+
+        ### Tests & Documentation
+        - [ ] #
+    validations:
+      required: true
+
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Target Milestone
+      options:
+        - "Month 1 — Foundations"
+        - "Month 2 — Core Features"
+        - "Month 3 — Dashboard & Pilot"
+        - "Post-MVP"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "critical"
+        - "high"
+        - "medium"
+        - "low"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Epic Acceptance Criteria
+      description: How will we know this Epic is 100% complete?
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Technical Notes / References
+      description: Related ADRs, architecture decisions, useful links

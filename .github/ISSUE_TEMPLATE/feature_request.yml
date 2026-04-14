@@ -1,0 +1,80 @@
+name: ✨ Feature Request
+description: Propose a new feature or improvement
+title: "[FEAT] "
+labels: ["type: feature", "status: needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! Please describe the **problem** you want to solve first, not just the solution.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Module
+      options:
+        - Auth & Security
+        - Products & Stock
+        - Sales
+        - Analytics & Dashboard
+        - Mobile / Offline
+        - Notifications
+        - Administration
+        - Subscriptions / Payments
+        - Infrastructure / DevOps
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the context and the pain point. e.g., "As a merchant, I cannot..."
+      placeholder: "I feel frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you have in mind
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any other approaches?
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Estimated Priority
+      options:
+        - Critical (Blocker for users)
+        - High (Strong impact on UX)
+        - Medium (Notable improvement)
+        - Low (Nice-to-have)
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Mockups, screenshots, examples from other apps
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this feature has not been proposed yet
+          required: true
+        - label: This feature is within the project's scope (African commercial management)
+          required: false
