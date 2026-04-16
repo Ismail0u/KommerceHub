@@ -67,7 +67,7 @@ kommercehub/
 1.  **Clone the repository**:
 
     ```bash
-    git clone https://github.com/Ismail0u/kommercehub.git
+    git clone https://github.com/Ismail0u/KommerceHub.git
     cd kommercehub
     ```
 
