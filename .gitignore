@@ -137,3 +137,55 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# Build Outputs
+.next/
+out/
+build
+dist
+
+# Misc
+.DS_Store
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+apps/api/.venv
+apps/api/venv
+apps/api/*.egg-info
+apps/api/.pytest_cache
+apps/api/htmlcov
+apps/api/.coverage
+apps/api/coverage.xml
+ 
+# Django
+apps/api/staticfiles/
+apps/api/mediafiles/
+apps/api/db.sqlite3
+ 
+# Editor
+.vscode/settings.json
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+ 
+# Expo / React Native
+apps/mobile/.expo
+apps/mobile/android/build
+apps/mobile/ios/build
+apps/mobile/ios/Pods
+ 
+# Docker
+.docker-data
