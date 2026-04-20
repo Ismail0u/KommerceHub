@@ -4,62 +4,75 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ─────────────────────────────────────
-  # Lint
-  # ─────────────────────────────────────
-  lint:
-    name: Lint
+
+  # ─────────────────────────────────────────────
+  # 1. Lint Backend (Ruff)
+  # ─────────────────────────────────────────────
+  lint-backend:
+    name: Lint Backend (Ruff)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: "apps/api/requirements/local.txt"
+
+      - name: Install Ruff
+        run: pip install ruff==0.8.6
+
+      - name: Ruff check
+        working-directory: apps/api
+        run: ruff check .
+
+      - name: Ruff format check
+        working-directory: apps/api
+        run: ruff format --check .
+
+  # ─────────────────────────────────────────────
+  # 2. Lint Frontend — activated when apps/web is ready
+  # ─────────────────────────────────────────────
+  lint-frontend:
+    name: Lint Frontend (ESLint + TS)
+    runs-on: ubuntu-latest
+    if: false  # TODO: enable when apps/web is initialized
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web lint
+      - run: pnpm --filter web type-check
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint TypeScript/React (ESLint)
-        run: pnpm lint
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Lint Python (Ruff)
-        working-directory: apps/api
-        run: |
-          pip install ruff
-          ruff check .
-          ruff format --check .
-
-  # ─────────────────────────────────────
-  # Tests Backend
-  # ─────────────────────────────────────
+  # ─────────────────────────────────────────────
+  # 3. Tests Backend (Pytest + coverage)
+  # ─────────────────────────────────────────────
   test-backend:
-    name: Tests Backend (pytest)
+    name: Tests Backend (Pytest)
     runs-on: ubuntu-latest
+    needs: lint-backend
+
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: kommercehub_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: kommerce
+          POSTGRES_PASSWORD: kommerce
         ports:
           - 5432:5432
         options: >-
@@ -69,119 +82,127 @@ jobs:
           --health-retries 5
 
       redis:
-        image: redis:7
+        image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-secret-key-not-for-production
+      DJANGO_DEBUG: "False"
+      POSTGRES_DB: kommercehub_test
+      POSTGRES_USER: kommerce
+      POSTGRES_PASSWORD: kommerce
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      REDIS_URL: redis://localhost:6379/0
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
+          cache-dependency-path: "apps/api/requirements/local.txt"
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         working-directory: apps/api
-        run: pip install -r requirements/dev.txt
+        run: pip install -r requirements/local.txt
 
       - name: Run migrations
         working-directory: apps/api
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/kommercehub_test
-          REDIS_URL: redis://localhost:6379/0
-          DJANGO_SETTINGS_MODULE: config.settings.test
-          SECRET_KEY: ci-test-secret-key-not-for-production
         run: python manage.py migrate --noinput
 
       - name: Run tests with coverage
         working-directory: apps/api
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/kommercehub_test
-          REDIS_URL: redis://localhost:6379/0
-          DJANGO_SETTINGS_MODULE: config.settings.test
-          SECRET_KEY: ci-test-secret-key-not-for-production
         run: |
-          pytest --cov=. --cov-report=xml --cov-report=term-missing -v
+          pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            -v
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: apps/api/coverage.xml
-          flags: backend
-
-  # ─────────────────────────────────────
-  # Tests Frontend
-  # ─────────────────────────────────────
-  test-frontend:
-    name: Tests Frontend (Vitest)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests with coverage
-        run: pnpm web:test:coverage
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: apps/web/coverage/lcov.info
-          flags: frontend
-
-  # ─────────────────────────────────────
-  # Build
-  # ─────────────────────────────────────
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [lint, test-backend, test-frontend]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build web
-        run: pnpm web:build
-
-      - name: Build Docker image (API)
-        run: docker build -t kommercehub-api:ci apps/api/
-
-  # ─────────────────────────────────────
-  # Coverage comment sur PR
-  # ─────────────────────────────────────
-  coverage-comment:
-    name: Coverage Report
-    runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Post coverage comment
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: apps/api/coverage.xml
+          flags: backend
+
+  # ─────────────────────────────────────────────
+  # 4. Tests Frontend — activated when Vitest is ready
+  # ─────────────────────────────────────────────
+  test-frontend:
+    name: Tests Frontend (Vitest)
+    runs-on: ubuntu-latest
+    if: false  # TODO: activate when apps/web + Vitest are available
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web test:coverage
+
+  # ─────────────────────────────────────────────
+  # 5. Build
+  # ─────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check shared package
+        run: pnpm --filter @kommercehub/shared type-check
+
+      - name: Build Docker image API (smoke test)
+        run: docker build --target development -t kommercehub-api:ci apps/api/
+
+  # ─────────────────────────────────────────────
+  # 6. Deploy Staging — develop only
+  # ─────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_STAGING_SERVICE_ID }}
+        run: |
+          curl -sf -X POST \
+            "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json"
